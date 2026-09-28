@@ -1,0 +1,134 @@
+/* Service detail: centered split — image one side, copy the other. */
+
+.service-detail-page {
+  display: flex;
+  min-height: calc(100svh - var(--header-h));
+  align-items: center;
+  padding-block: clamp(1.5rem, 4vh, 3rem);
+}
+
+.service-detail-split {
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 3.5rem);
+  align-items: center;
+}
+
+.service-detail-split__media {
+  margin: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.service-detail-split__photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.service-detail-split__copy {
+  display: grid;
+  gap: 1.25rem;
+  align-content: center;
+  justify-items: start;
+}
+
+.service-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.service-detail-back:hover {
+  color: var(--primary);
+}
+
+.service-detail-back svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.service-detail-split__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--foreground);
+  text-wrap: balance;
+}
+
+.service-detail-split__lede {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+
+.service-detail-split__steps-title {
+  margin: 0 0 0.75rem;
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.service-detail-split__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.service-detail-split__list li {
+  padding-inline-start: 0.9rem;
+  border-inline-start: 2px solid rgb(8 114 214 / 0.28);
+}
+
+.service-detail-split__list h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 650;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+
+.service-detail-split__list p {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+@media (min-width: 900px) {
+  .service-detail-split {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  }
+
+  .service-detail-split__photo {
+    max-height: min(32rem, 72vh);
+    object-fit: cover;
+  }
+}
+
+@media (max-width: 899px) {
+  .service-detail-page {
+    min-height: auto;
+    align-items: start;
+  }
+
+  .service-detail-split__media {
+    max-width: 22rem;
+    margin-inline: auto;
+  }
+}

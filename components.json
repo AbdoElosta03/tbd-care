@@ -1,0 +1,31 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "base-nova",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "rtl": false,
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "registries": {
+    "@reactbits-pro": {
+      "url": "https://pro.reactbits.dev/api/registry/{name}",
+      "headers": {
+        "Authorization": "Bearer ${REACTBITS_PRO_LICENSE_KEY}"
+      }
+    },
+    "@react-bits": "https://reactbits.dev/r/{name}.json"
+  }
+}

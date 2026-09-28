@@ -1,0 +1,125 @@
+/*
+ * TBD Care Design Tokens
+ *
+ * Brand:
+ * Primary       #0872D6
+ * Primary Dark  #243ACE
+ * Primary Light #1D8BE8
+ * Accent        #248EF0
+ */
+
+:root {
+  /* Brand */
+  --primary: #0872D6;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #248EF0;
+  --secondary-foreground: #FFFFFF;
+
+  --primary-hover: #243ACE;
+
+  --secondary-soft: #EDF7FF;
+
+  /* Backgrounds */
+  --background: #F7F9FC;
+  --foreground: #101828;
+
+  --card: #FFFFFF;
+  --card-foreground: #101828;
+
+  /* Text */
+  --muted: #667085;
+  --muted-foreground: #667085;
+
+  /* Borders */
+  --border: #E4E7EC;
+  --input: #E4E7EC;
+  --ring: #0872D6;
+
+  /* Accent */
+  --accent: var(--primary);
+  --accent-foreground: var(--primary-foreground);
+
+  /* Layout */
+  --header-h: 5rem;
+
+  /* Shape */
+  --radius-control: 9999px;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-card: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+
+  /* Shadows */
+  --shadow-card:
+    0 1px 2px rgb(16 24 40 / 0.05),
+    0 4px 16px rgb(16 24 40 / 0.04);
+
+  --shadow-card-hover:
+    0 8px 30px rgb(36 58 206 / 0.10);
+
+  /* Gradient */
+  --brand-gradient: linear-gradient(
+    90deg,
+    #243ACE 0%,
+    #0872D6 50%,
+    #248EF0 100%
+  );
+
+  /* Hero / matching surfaces (footer, join emphasis) */
+  --surface-hero:
+    radial-gradient(ellipse 46% 42% at 78% 42%, rgb(156 208 255 / 0.34), transparent 68%),
+    radial-gradient(ellipse 34% 28% at 10% 8%, rgb(255 255 255 / 0.14), transparent 70%),
+    linear-gradient(165deg, #0b3f9c 0%, #0866c8 46%, #0d7ad6 78%, #1490ea 100%);
+  --surface-hero-foreground: #ffffff;
+  --surface-hero-muted: rgb(255 255 255 / 0.9);
+  --surface-hero-muted-soft: rgb(255 255 255 / 0.74);
+
+  color-scheme: light;
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-tajawal), "Segoe UI", Tahoma, sans-serif;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-primary-hover: var(--primary-hover);
+
+  --color-secondary-soft: var(--secondary-soft);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --radius-control: 9999px;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-card: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html[dir="rtl"] {
+  --font-sans: var(--font-tajawal), "Segoe UI", Tahoma, sans-serif;
+}

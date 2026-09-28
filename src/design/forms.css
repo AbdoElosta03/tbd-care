@@ -1,0 +1,39 @@
+/* Shared form field direction and inner-page form shell */
+
+.join-form-field {
+  text-align: start;
+}
+
+html[dir="rtl"] .join-form-field {
+  direction: rtl;
+}
+
+html[dir="ltr"] .join-form-field {
+  direction: ltr;
+}
+
+.join-form-field::placeholder {
+  text-align: start;
+}
+
+html[dir="rtl"] .join-banner-field {
+  direction: rtl;
+  text-align: start;
+}
+
+html[dir="ltr"] .join-banner-field {
+  direction: ltr;
+  text-align: start;
+}
+
+.join-banner-field::placeholder {
+  text-align: start;
+}
+
+.join-form-shell {
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--card);
+  box-shadow: 0 12px 32px rgb(16 24 40 / 0.06);
+}
