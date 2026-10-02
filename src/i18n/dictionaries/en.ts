@@ -46,11 +46,34 @@ const dictionary: Dictionary = {
   hero: {
     title: "TBD Care",
     description:
-      "Complete healthcare for your employees and their families, with a wide medical network and a simple digital experience from the first visit to the last claim.",
+      "Healthcare closer to you across Libya, with a wide medical network and a simple digital experience from the first visit to the last claim.",
     primaryAction: "Explore our services",
     secondaryAction: "Medical network",
     visualAlt:
       "A TBD Care clinician in a modern clinic, with TBDCare and 0800 150 150",
+  },
+  about: {
+    eyebrow: "About us",
+    title: "Healthcare that feels closer and clearer",
+    description:
+      "TBD Care is a Libyan healthcare network that brings medical providers and digital tools together, helping individuals and company employees reach the right care with confidence and speed.",
+    points: [
+      { id: "connected", title: "Connected care", description: "One network connecting every member to the right provider." },
+      { id: "local", title: "Local expertise", description: "Healthcare solutions shaped around the Libyan market." },
+      { id: "digital", title: "Digital experience", description: "Simpler steps and clearer follow-up throughout the journey." },
+    ],
+  },
+  partners: {
+    eyebrow: "Our partners",
+    title: "Trusted by leading organizations",
+    description: "We are proud to work with Libyan organizations that care about employee health and experience.",
+    items: [
+      { id: "nooran-bank", name: "Al-Nooran Bank", monogram: "N" },
+      { id: "noc", name: "National Oil Corporation", monogram: "NOC" },
+      { id: "altafani", name: "Al-Tafani Company", monogram: "T" },
+      { id: "qetaf", name: "Qetaf", monogram: "Q" },
+      { id: "connectHub", name: "Connect Hub", monogram: "CH" },
+    ],
   },
   whyUs: {
     title: "Why TBD is different",
@@ -213,7 +236,7 @@ const dictionary: Dictionary = {
     previewAction: "View the network",
     directoryTitle: "TBD Medical Network",
     directoryDescription:
-      "Choose hospitals, clinics, or pharmacies, then search and filter by city. The names below are sample structure only, not the live provider directory.",
+      "Explore TBD Care network providers, choose the right category, then search by name or city.",
     searchLabel: "Search",
     searchPlaceholder: "Search by name or address",
     cityLabel: "City",

@@ -13,6 +13,7 @@ export async function HeroSection() {
   return (
     <section id="hero" className="story-hero" aria-labelledby="hero-title">
       <div className="story-hero-canvas" aria-hidden="true">
+        <div className="story-hero-map" />
         <div className="story-hero-dots" />
         <div className="story-glow story-glow-a" />
         <div className="story-glow story-glow-b" />

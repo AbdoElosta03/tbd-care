@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 720" role="img" aria-labelledby="title description">
+  <title id="title">خريطة ليبيا وشبكة المدن الطبية</title>
+  <desc id="description">خريطة مبسطة لليبيا تربط طرابلس ومصراتة وبنغازي بخطوط شبكة طبية هادئة.</desc>
+  <defs>
+    <linearGradient id="map-fill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18"/>
+      <stop offset=".55" stop-color="#7fd0ff" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#dff5ff" stop-opacity=".06"/>
+    </linearGradient>
+    <linearGradient id="map-stroke" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#dff6ff" stop-opacity=".92"/>
+      <stop offset="1" stop-color="#77c9ff" stop-opacity=".52"/>
+    </linearGradient>
+    <radialGradient id="node-glow">
+      <stop stop-color="#fff" stop-opacity=".9"/>
+      <stop offset=".25" stop-color="#9de2ff" stop-opacity=".65"/>
+      <stop offset="1" stop-color="#53b9ff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="micro-grid" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#fff" opacity=".18"/>
+    </pattern>
+    <filter id="soft-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="map-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#003d8e" flood-opacity=".18"/>
+    </filter>
+    <linearGradient id="vertical-fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset=".32" stop-color="#fff"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity=".52"/>
+      <stop offset=".7" stop-color="#fff" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".035"/>
+    </linearGradient>
+    <radialGradient id="text-cutout">
+      <stop offset="0" stop-color="#000" stop-opacity=".96"/>
+      <stop offset=".52" stop-color="#000" stop-opacity=".84"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="content-safe-fade" maskUnits="userSpaceOnUse" x="0" y="0" width="900" height="720">
+      <rect width="900" height="720" fill="url(#vertical-fade)"/>
+      <ellipse cx="360" cy="430" rx="350" ry="210" fill="url(#text-cutout)"/>
+    </mask>
+    <clipPath id="libya-clip">
+      <path d="M810 215L801 215 808 235 797 265 810 303 810 474 810 651 720 651 592 680 557 675 421 597 321 627 296 601 225 580 205 550 170 528 149 537 133 510 131 489 104 455 122 435 118 404 124 378 121 356 129 317 126 295 112 252 134 241 138 221 133 201 164 183 177 167 199 153 202 116 255 133 274 129 311 137 371 158 392 201 432 210 496 231 544 254 566 242 587 219 577 183 591 159 623 137 654 131 715 140 731 162 747 162 762 170 806 176Z"/>
+    </clipPath>
+  </defs>
+
+  <g mask="url(#content-safe-fade)">
+  <g filter="url(#map-shadow)">
+    <path
+      d="M810 215L801 215 808 235 797 265 810 303 810 474 810 651 720 651 592 680 557 675 421 597 321 627 296 601 225 580 205 550 170 528 149 537 133 510 131 489 104 455 122 435 118 404 124 378 121 356 129 317 126 295 112 252 134 241 138 221 133 201 164 183 177 167 199 153 202 116 255 133 274 129 311 137 371 158 392 201 432 210 496 231 544 254 566 242 587 219 577 183 591 159 623 137 654 131 715 140 731 162 747 162 762 170 806 176Z"
+      fill="url(#map-fill)"
+      stroke="url(#map-stroke)"
+      stroke-width="2.25"
+      stroke-linejoin="round"
+    />
+  </g>
+
+  <g clip-path="url(#libya-clip)" opacity=".7">
+    <rect x="90" y="105" width="735" height="585" fill="url(#micro-grid)"/>
+    <path d="M145 254C270 292 382 256 506 310S704 385 820 345" fill="none" stroke="#a9e3ff" stroke-opacity=".22"/>
+    <path d="M112 404C274 374 374 440 493 456S688 446 810 504" fill="none" stroke="#a9e3ff" stroke-opacity=".18"/>
+    <path d="M213 151C262 246 279 348 295 601M373 158C420 259 424 414 421 597M587 157C556 286 558 453 592 680" fill="none" stroke="#d9f5ff" stroke-opacity=".13"/>
+  </g>
+
+  <g fill="none" stroke="#d8f5ff" stroke-width="1.7" stroke-linecap="round" stroke-dasharray="4 9" opacity=".72">
+    <path d="M279 128C307 124 340 132 364 153"/>
+    <path d="M364 153C438 124 522 128 588 165"/>
+  </g>
+
+  <g opacity=".5">
+    <circle cx="279" cy="128" r="34" fill="url(#node-glow)"/>
+    <circle cx="364" cy="153" r="30" fill="url(#node-glow)"/>
+    <circle cx="588" cy="165" r="34" fill="url(#node-glow)"/>
+  </g>
+
+  <g fill="#fff" stroke="#9be0ff" stroke-width="2" filter="url(#soft-glow)">
+    <circle cx="279" cy="128" r="7"/>
+    <circle cx="364" cy="153" r="7"/>
+    <circle cx="588" cy="165" r="7"/>
+  </g>
+
+  <g fill="#fff" font-family="Tajawal, Arial, sans-serif" font-size="17" font-weight="600" text-anchor="middle">
+    <text x="279" y="102">طرابلس</text>
+    <text x="375" y="187">مصراتة</text>
+    <text x="598" y="199">بنغازي</text>
+  </g>
+  </g>
+</svg>

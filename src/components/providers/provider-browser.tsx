@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Building2, ChevronLeft, ChevronRight, MapPin, Pill, Search, Stethoscope } from "lucide-react";
-import type { NetworkCategoryId } from "@/data/network-facilities";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Building2, Check, ChevronDown, ChevronLeft, ChevronRight, MapPin, Pill, Search, Stethoscope } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
+import type { NetworkFacility, NetworkResponse } from "@/lib/api";
+import type { ApiFailure } from "@/lib/api/types";
+import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/cn";
 
-/** Provider directory UI: category cards, local search/filter, pagination, and map embed. */
+type CategoryId = NetworkFacility["category"];
 
-export type BrowserFacility = {
-  id: string;
-  category: NetworkCategoryId;
-  cityId: string;
-  city: string;
-  name: string;
-  address: string;
-  lat: number;
-  lng: number;
-};
-
-export type BrowserCategory = {
-  id: NetworkCategoryId;
+type BrowserCategory = {
+  id: CategoryId;
   name: string;
   description: string;
 };
@@ -41,27 +32,14 @@ type BrowserCopy = {
   pageOf: string;
 };
 
-const PAGE_SIZE = 4;
+const PAGE_SIZE = 10;
 
-const categoryIcons = {
-  hospitals: Building2,
-  clinics: Stethoscope,
-  pharmacies: Pill,
-} as const;
-
-// Category accents stay distinct while shared text and surfaces use design tokens.
-const categoryWash = {
-  hospitals: "from-primary to-[#4aa4ef]",
-  clinics: "from-[#1d4ed8] to-[#60a5fa]",
-  pharmacies: "from-[#0f766e] to-[#2dd4bf]",
-} as const;
-
-function motionDelay(ms: number) {
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return 0;
-  }
-  return ms;
-}
+const categoryVisuals: Record<CategoryId, { image: string; Icon: typeof Building2 }> = {
+  hospitals: { image: "/image/network-hospitals.png", Icon: Building2 },
+  clinics: { image: "/image/network-clinics.png", Icon: Stethoscope },
+  pharmacies: { image: "/image/network-pharmacies.png", Icon: Pill },
+  other: { image: "/image/network-other.png", Icon: Building2 },
+};
 
 function mapsEmbedUrl(lat: number, lng: number) {
   return `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
@@ -74,7 +52,7 @@ function mapsLink(lat: number, lng: number) {
 function ResultSkeleton() {
   return (
     <ul className="mt-6 grid gap-3" aria-hidden="true">
-      {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+      {Array.from({ length: 4 }).map((_, index) => (
         <li key={index} className="animate-pulse rounded-[1.25rem] bg-white px-5 py-4 shadow-[0_10px_30px_rgb(16_24_40/0.05)]">
           <div className="flex items-center gap-4">
             <div className="size-12 rounded-full bg-[#e7eef8]" />
@@ -82,7 +60,6 @@ function ResultSkeleton() {
               <div className="h-3.5 w-40 max-w-[55%] rounded-full bg-[#e7eef8]" />
               <div className="h-3 w-56 max-w-[70%] rounded-full bg-[#f1f5fb]" />
             </div>
-            <div className="hidden h-9 w-28 rounded-full bg-[#eef3fa] sm:block" />
           </div>
         </li>
       ))}
@@ -90,285 +67,290 @@ function ResultSkeleton() {
   );
 }
 
-export function ProviderBrowser({
-  categories,
-  facilities,
-  cities,
-  copy,
-}: {
-  categories: BrowserCategory[];
-  facilities: BrowserFacility[];
-  cities: Array<{ id: string; name: string }>;
-  copy: BrowserCopy;
-}) {
-  const [categoryId, setCategoryId] = useState<NetworkCategoryId | null>(null);
-  const [phase, setPhase] = useState<"categories" | "leaving" | "loading" | "results">("categories");
-  const [query, setQuery] = useState("");
-  const [cityId, setCityId] = useState("all");
-  const [mapId, setMapId] = useState<string | null>(null);
+export function ProviderBrowser({ categories, copy, locale }: { categories: BrowserCategory[]; copy: BrowserCopy; locale: Locale }) {
+  const [selectedCategory, setSelectedCategory] = useState<CategoryId | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [city, setCity] = useState("");
   const [page, setPage] = useState(1);
-  const [listLoading, setListLoading] = useState(false);
+  const [result, setResult] = useState<NetworkResponse | null>(null);
+  const [resolvedRequest, setResolvedRequest] = useState("");
+  const [failedRequest, setFailedRequest] = useState("");
+  const [mapId, setMapId] = useState<string | null>(null);
+  const [cityMenuOpen, setCityMenuOpen] = useState(false);
+  const cityMenuRef = useRef<HTMLDivElement>(null);
 
-  const category = categories.find((item) => item.id === categoryId) ?? null;
+  const requestKey = `${selectedCategory ?? "categories"}:${city}:${search}:${page}`;
+  const loading = resolvedRequest !== requestKey && failedRequest !== requestKey;
+  const error = failedRequest === requestKey;
 
-  // Keep transition phases explicit so reduced-motion users can skip delays.
   useEffect(() => {
-    if (phase !== "leaving" && phase !== "loading") return;
-    const next = phase === "leaving" ? "loading" : "results";
-    const delay = motionDelay(phase === "leaving" ? 340 : 720);
-    const timer = window.setTimeout(() => setPhase(next), delay);
+    const timer = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 300);
+
     return () => window.clearTimeout(timer);
-  }, [phase]);
+  }, [searchInput]);
 
-  const cityOptions = useMemo(() => {
-    if (!categoryId) return cities;
-    const used = new Set(
-      facilities.filter((facility) => facility.category === categoryId).map((facility) => facility.cityId),
-    );
-    return cities.filter((city) => used.has(city.id));
-  }, [categoryId, cities, facilities]);
+  useEffect(() => {
+    const controller = new AbortController();
+    const searchParams = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
 
-  // Search and pagination run locally until the directory API is connected.
-  const results = useMemo(() => {
-    if (!categoryId) return [];
-    const needle = query.trim().toLowerCase();
-    return facilities.filter((facility) => {
-      if (facility.category !== categoryId) return false;
-      if (cityId !== "all" && facility.cityId !== cityId) return false;
-      if (!needle) return true;
-      return `${facility.name} ${facility.address} ${facility.city}`.toLowerCase().includes(needle);
-    });
-  }, [categoryId, cityId, facilities, query]);
+    if (selectedCategory) searchParams.set("category", selectedCategory);
+    if (city) searchParams.set("city", city);
+    if (search) searchParams.set("search", search);
 
-  const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount);
-  const pageItems = results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const mapped = results.find((facility) => facility.id === mapId) ?? null;
+    fetch(`/api/network?${searchParams.toString()}`, { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        const body = (await response.json()) as NetworkResponse | ApiFailure;
+        if (!response.ok) throw new Error((body as ApiFailure).error?.message ?? "Unable to load the provider network.");
+        return body as NetworkResponse;
+      })
+      .then((data) => {
+        setResult(data);
+        setResolvedRequest(requestKey);
+      })
+      .catch((requestError: unknown) => {
+        if (!(requestError instanceof DOMException && requestError.name === "AbortError")) setFailedRequest(requestKey);
+      });
 
-  function openCategory(id: NetworkCategoryId) {
-    setCategoryId(id);
-    setQuery("");
-    setCityId("all");
-    setMapId(null);
+    return () => controller.abort();
+  }, [city, page, requestKey, search, selectedCategory]);
+
+  useEffect(() => {
+    function closeCityMenu(event: PointerEvent) {
+      if (!cityMenuRef.current?.contains(event.target as Node)) {
+        setCityMenuOpen(false);
+      }
+    }
+
+    function closeCityMenuWithKeyboard(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setCityMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeCityMenu);
+    document.addEventListener("keydown", closeCityMenuWithKeyboard);
+    return () => {
+      document.removeEventListener("pointerdown", closeCityMenu);
+      document.removeEventListener("keydown", closeCityMenuWithKeyboard);
+    };
+  }, []);
+
+  const facilities = result?.data ?? [];
+  const cities = result?.meta.cities ?? [];
+  const mapped = facilities.find((facility) => facility.id === mapId) ?? null;
+  const category = categories.find((item) => item.id === selectedCategory);
+  const selectedCity = cities.find((item) => item.id === city);
+  const selectedCityName = selectedCity
+    ? selectedCity.name[locale] || selectedCity.name.en || selectedCity.name.ar
+    : copy.allCities;
+  const errorMessage = locale === "ar" ? "تعذر تحميل مزودي الخدمة حالياً." : "Unable to load providers right now.";
+
+  function nameFor(facility: NetworkFacility) {
+    return facility.name[locale] || facility.name.en || facility.name.ar;
+  }
+
+  function addressFor(facility: NetworkFacility) {
+    return facility.address[locale] || facility.address.en || facility.address.ar;
+  }
+
+  function selectCategory(categoryId: CategoryId) {
+    setSelectedCategory(categoryId);
+    setSearchInput("");
+    setSearch("");
+    setCity("");
     setPage(1);
-    setPhase("leaving");
+    setMapId(null);
   }
 
   function resetCategory() {
-    setCategoryId(null);
-    setQuery("");
-    setCityId("all");
-    setMapId(null);
+    setSelectedCategory(null);
+    setSearchInput("");
+    setSearch("");
+    setCity("");
     setPage(1);
-    setListLoading(false);
-    setPhase("categories");
-  }
-
-  function changePage(nextPage: number) {
     setMapId(null);
-    setListLoading(true);
-    window.setTimeout(() => {
-      setPage(nextPage);
-      setListLoading(false);
-    }, motionDelay(420));
   }
 
-  function showOnMap() {
-    const next = pageItems[0] ?? results[0];
-    if (!next) return;
-    setMapId((current) => (current && results.some((facility) => facility.id === current) ? null : next.id));
-  }
-
-  if (phase === "categories" || phase === "leaving") {
+  if (!selectedCategory) {
     return (
-      <div className="mt-10 grid gap-5 md:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-3xl gap-4 px-4 pb-12 pt-[calc(var(--header-h)+2rem)] sm:grid-cols-2 sm:px-6 md:pb-16 md:pt-[calc(var(--header-h)+3rem)]">
         {categories.map((item) => {
-          const Icon = categoryIcons[item.id];
-          const count = facilities.filter((facility) => facility.category === item.id).length;
-          const picked = phase === "leaving" && categoryId === item.id;
-          const dimmed = phase === "leaving" && categoryId !== item.id;
+          const visual = categoryVisuals[item.id];
+          const count = result?.meta.counts[item.id] ?? 0;
+          const Icon = visual.Icon;
+
           return (
             <button
               key={item.id}
               type="button"
-              onClick={() => openCategory(item.id)}
-              disabled={phase === "leaving"}
-              className={cn(
-                "group relative flex min-h-64 flex-col overflow-hidden rounded-[1.75rem] bg-white p-6 text-start shadow-[0_18px_40px_rgb(8_114_214/0.08)] transition duration-300",
-                "hover:-translate-y-1 hover:shadow-[0_24px_48px_rgb(8_114_214/0.16)]",
-                picked && "z-10 scale-[1.04] shadow-[0_28px_60px_rgb(8_114_214/0.22)]",
-                dimmed && "scale-[0.97] opacity-40",
-              )}
+              onClick={() => selectCategory(item.id)}
+              className="group relative min-h-44 overflow-hidden rounded-[1.35rem] bg-primary p-4 text-start shadow-[0_18px_40px_rgb(8_114_214/0.15)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgb(8_114_214/0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4"
             >
-              <span className={cn("absolute inset-x-0 top-0 h-28 bg-gradient-to-bl opacity-95", categoryWash[item.id])} />
-              <span className="absolute -end-6 -top-8 size-28 rounded-full bg-white/20" />
-              <span className="relative grid size-14 place-items-center rounded-2xl bg-white/95 text-primary shadow-sm">
-                <Icon className="size-7" aria-hidden="true" />
-              </span>
-              <span className="relative mt-auto pt-16 text-2xl font-semibold text-foreground">{item.name}</span>
-              <span className="relative mt-2 text-sm leading-6 text-muted">{item.description}</span>
-              <span className="relative mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
-                {count} {copy.countSuffix}
-                <ArrowRight className="size-4 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" aria-hidden="true" />
+              <span className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url(${visual.image})` }} />
+              <span
+                className="absolute inset-x-0 bottom-0 h-[72%] bg-primary/20 backdrop-blur-[1px]"
+                style={{
+                  maskImage: "linear-gradient(to top, black 0%, black 40%, transparent 100%)",
+                  WebkitMaskImage: "linear-gradient(to top, black 0%, black 40%, transparent 100%)",
+                }}
+              />
+              <span
+                className="absolute inset-0"
+                style={{
+                  background: "linear-gradient(to top, rgba(8, 114, 214, 0.92) 0%, rgba(8, 114, 214, 0.68) 30%, rgba(8, 114, 214, 0.28) 58%, rgba(8, 114, 214, 0.04) 82%, transparent 100%)",
+                }}
+              />
+              <span className="relative flex h-full flex-col items-start justify-end">
+                <span className="flex items-center gap-3">
+                  <span className="grid size-9 place-items-center rounded-xl bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-sm">
+                    <Icon className="size-4" aria-hidden="true" />
+                  </span>
+                  <span className="text-lg font-semibold text-white">{item.name}</span>
+                </span>
+                <span className="mt-1.5 max-w-sm text-xs leading-5 text-white/80">{item.description}</span>
+                <span className="mt-3 rounded-full bg-white/14 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/20 backdrop-blur-sm">{loading ? "…" : `${count} ${copy.countSuffix}`}</span>
               </span>
             </button>
           );
         })}
+        {error ? <p role="alert" className="sm:col-span-2 text-muted">{errorMessage}</p> : null}
       </div>
     );
   }
 
   return (
-    <div className="mt-10">
-      <button
-        type="button"
-        onClick={resetCategory}
-        className="inline-flex items-center gap-2 text-sm font-medium text-primary"
+    <div>
+      <section
+        className="network-hero relative min-h-[30rem] bg-[#eaf6ff] bg-cover bg-center"
+        style={{ backgroundImage: "url(/image/network-libya-background-v2.png)" }}
       >
-        <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
-        {copy.back}
-      </button>
-      <h2 className="mt-4 text-2xl font-semibold">{category?.name}</h2>
+        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white" />
+        <div className="relative z-10 mx-auto min-h-[30rem] w-full max-w-7xl px-4 pb-12 pt-[calc(var(--header-h)+2rem)] sm:px-6 sm:pt-[calc(var(--header-h)+3rem)]">
+          <button type="button" onClick={resetCategory} className="inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-2 text-sm font-semibold text-primary shadow-sm ring-1 ring-primary/10 backdrop-blur-md transition hover:bg-white">
+            <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
+            {copy.back}
+          </button>
+          <div className="mt-10 max-w-md py-4 [text-shadow:0_1px_18px_rgb(255_255_255/0.95)]">
+            <p className="text-sm font-semibold text-primary">{locale === "ar" ? "شبكة رعاية أقرب إليك" : "Care closer to you"}</p>
+            <h1 className="mt-2 text-4xl font-bold tracking-tight text-[#071b36] sm:text-5xl">{category?.name}</h1>
+            <p className="mt-4 text-base leading-7 text-[#52647a]">{category?.description}</p>
+            <p className="mt-5 inline-flex rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+              {result?.meta.total ?? 0} {copy.countSuffix}
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-end">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6">
+      <div className="-mt-8 flex flex-col gap-4 rounded-[1.5rem] border border-white/80 bg-white/92 p-4 shadow-[0_18px_50px_rgb(31_65_110/0.12)] backdrop-blur-xl lg:flex-row lg:items-end lg:p-5">
         <label className="grid min-w-0 flex-1 gap-1.5 text-sm font-medium">
           {copy.searchLabel}
           <span className="relative">
-            <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
-            <input
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setMapId(null);
-                setPage(1);
-              }}
-              placeholder={copy.searchPlaceholder}
-              className="h-11 w-full rounded-full border border-border bg-card ps-10 pe-4 text-sm outline-none focus-visible:border-primary"
-            />
+            <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-primary" aria-hidden="true" />
+            <input value={searchInput} onChange={(event) => { setSearchInput(event.target.value); setMapId(null); }} placeholder={copy.searchPlaceholder} className="h-14 w-full rounded-2xl border border-[#dce9f5] bg-[#f8fbff] ps-12 pe-4 text-sm shadow-inner outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10" />
           </span>
         </label>
-        <label className="grid gap-1.5 text-sm font-medium lg:w-56">
-          {copy.cityLabel}
-          <select
-            value={cityId}
-            onChange={(event) => {
-              setCityId(event.target.value);
-              setMapId(null);
-              setPage(1);
-            }}
-            className="h-11 rounded-full border border-border bg-card px-4 text-sm outline-none focus-visible:border-primary"
-          >
-            <option value="all">{copy.allCities}</option>
-            {cityOptions.map((city) => (
-              <option key={city.id} value={city.id}>
-                {city.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          onClick={showOnMap}
-          disabled={results.length === 0 || phase === "loading" || listLoading}
-          className={buttonClassName("primary", "gap-2 disabled:opacity-50")}
-        >
-          <MapPin className="size-4" aria-hidden="true" />
-          {mapped ? copy.hideMap : copy.viewOnMap}
-        </button>
+        <div className="grid gap-1.5 text-sm font-medium lg:w-64">
+          <span>{copy.cityLabel}</span>
+          <div ref={cityMenuRef} className="relative">
+            <button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={cityMenuOpen}
+              onClick={() => setCityMenuOpen((open) => !open)}
+              className="flex h-14 w-full items-center rounded-2xl border border-[#dce9f5] bg-[#f8fbff] ps-4 pe-3 text-start text-sm font-medium text-foreground shadow-inner outline-none transition hover:border-primary/35 hover:bg-white focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/8 text-primary">
+                <MapPin className="size-4.5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1 truncate px-3">{selectedCityName}</span>
+              <ChevronDown className={cn("size-5 shrink-0 text-muted transition-transform duration-200", cityMenuOpen && "rotate-180")} aria-hidden="true" />
+            </button>
+
+            {cityMenuOpen ? (
+              <div className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-[#dce9f5] bg-white p-2 shadow-[0_20px_55px_rgb(31_65_110/0.18)]" role="listbox" aria-label={copy.cityLabel}>
+                {[{ id: "", name: { ar: copy.allCities, en: copy.allCities } }, ...cities].map((item) => {
+                  const itemName = item.name[locale] || item.name.en || item.name.ar;
+                  const selected = city === item.id;
+
+                  return (
+                    <button
+                      key={item.id || "all"}
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      onClick={() => {
+                        setCity(item.id);
+                        setPage(1);
+                        setMapId(null);
+                        setCityMenuOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-sm transition",
+                        selected ? "bg-primary text-white" : "text-foreground hover:bg-primary/7 hover:text-primary",
+                      )}
+                    >
+                      <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", selected ? "bg-white/16" : "bg-primary/8 text-primary")}>
+                        <MapPin className="size-4" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{itemName}</span>
+                      {selected ? <Check className="size-4 shrink-0" aria-hidden="true" /> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
 
-      {phase === "loading" || listLoading ? (
-        <ResultSkeleton />
-      ) : (
+      {loading ? <ResultSkeleton /> : null}
+      {!loading && error ? <p role="alert" className="mt-8 text-muted">{errorMessage}</p> : null}
+      {!loading && !error && facilities.length === 0 ? <p className="mt-8 text-muted">{copy.empty}</p> : null}
+
+      {!loading && !error && facilities.length > 0 ? (
         <>
           {mapped ? (
             <div className="mt-6 overflow-hidden rounded-[1.25rem] bg-white shadow-[0_16px_40px_rgb(8_114_214/0.08)]">
-              <iframe
-                title={mapped.name}
-                src={mapsEmbedUrl(mapped.lat, mapped.lng)}
-                className="h-80 w-full"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+              <iframe title={nameFor(mapped)} src={mapsEmbedUrl(mapped.lat, mapped.lng)} className="h-80 w-full" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                <p className="text-sm font-medium">{mapped.name}</p>
-                <a
-                  href={mapsLink(mapped.lat, mapped.lng)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-primary"
-                >
-                  {copy.openInGoogleMaps}
-                </a>
+                <p className="text-sm font-medium">{nameFor(mapped)}</p>
+                <a href={mapsLink(mapped.lat, mapped.lng)} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary">{copy.openInGoogleMaps}</a>
               </div>
             </div>
           ) : null}
 
-          {results.length === 0 ? (
-            <p className="mt-8 text-muted">{copy.empty}</p>
-          ) : (
-            <ul className="mt-6 grid gap-3">
-              {pageItems.map((facility) => (
-                <li key={facility.id}>
-                  <article
-                    className={cn(
-                      "flex flex-col gap-4 rounded-[1.25rem] bg-white px-5 py-4 shadow-[0_10px_30px_rgb(16_24_40/0.05)] sm:flex-row sm:items-center sm:justify-between",
-                      mapped?.id === facility.id && "ring-2 ring-primary",
-                    )}
-                  >
-                    <div className="flex min-w-0 items-start gap-3">
-                      <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-full bg-secondary-soft text-primary">
-                        <MapPin className="size-4" aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0">
-                        <h3 className="font-semibold">{facility.name}</h3>
-                        <p className="mt-1 text-sm text-muted">{facility.address}</p>
-                        <p className="mt-2 inline-flex rounded-full bg-secondary-soft px-2.5 py-0.5 text-xs font-semibold text-primary">
-                          {facility.city}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setMapId(facility.id)}
-                      className={buttonClassName("secondary", "gap-2")}
-                    >
-                      <MapPin className="size-4" aria-hidden="true" />
-                      {copy.viewOnMap}
-                    </button>
-                  </article>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul className="mt-7 grid gap-4">
+            {facilities.map((facility) => (
+              <li key={facility.id}>
+                <article className={cn("group flex flex-col gap-4 rounded-[1.35rem] border border-[#e8f0f8] bg-white/95 p-3 shadow-[0_12px_35px_rgb(31_65_110/0.07)] transition duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_18px_42px_rgb(8_114_214/0.12)] sm:flex-row sm:items-center sm:justify-between", mapped?.id === facility.id && "border-primary/40 ring-2 ring-primary/20")}>
+                  <div className="min-w-0 px-2 py-2">
+                    <h3 className="font-semibold text-[#071b36] transition group-hover:text-primary">{nameFor(facility)}</h3>
+                    <p className="mt-2 text-sm text-muted">{addressFor(facility)}</p>
+                    <span className="mt-3 inline-flex rounded-full bg-primary/8 px-3 py-1 text-xs font-semibold text-primary ring-1 ring-primary/10">
+                      {category?.name}
+                    </span>
+                  </div>
+                  <button type="button" onClick={() => setMapId((current) => current === facility.id ? null : facility.id)} className={buttonClassName("secondary", "mx-1 gap-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white")}><MapPin className="size-4" aria-hidden="true" />{mapped?.id === facility.id ? copy.hideMap : copy.viewOnMap}</button>
+                </article>
+              </li>
+            ))}
+          </ul>
 
-          {results.length > PAGE_SIZE ? (
+          {(result?.meta.pageCount ?? 0) > 1 ? (
             <nav className="mt-6 flex items-center justify-between gap-3" aria-label={copy.pageOf}>
-              <button
-                type="button"
-                onClick={() => changePage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={buttonClassName("secondary", "gap-1.5 disabled:opacity-40")}
-              >
-                <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
-                {copy.previous}
-              </button>
-              <p className="text-sm font-medium text-muted">
-                {currentPage} {copy.pageOf} {pageCount}
-              </p>
-              <button
-                type="button"
-                onClick={() => changePage(currentPage + 1)}
-                disabled={currentPage === pageCount}
-                className={buttonClassName("secondary", "gap-1.5 disabled:opacity-40")}
-              >
-                {copy.next}
-                <ChevronRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-              </button>
+              <button type="button" onClick={() => { setPage((currentPage) => currentPage - 1); setMapId(null); }} disabled={page === 1} className={buttonClassName("secondary", "gap-1.5 disabled:opacity-40")}><ChevronLeft className="size-4 rtl:rotate-180" aria-hidden="true" />{copy.previous}</button>
+              <p className="text-sm font-medium text-muted">{result?.meta.page} {copy.pageOf} {result?.meta.pageCount}</p>
+              <button type="button" onClick={() => { setPage((currentPage) => currentPage + 1); setMapId(null); }} disabled={page === result?.meta.pageCount} className={buttonClassName("secondary", "gap-1.5 disabled:opacity-40")}>{copy.next}<ChevronRight className="size-4 rtl:rotate-180" aria-hidden="true" /></button>
             </nav>
           ) : null}
         </>
-      )}
+      ) : null}
+      </div>
     </div>
   );
 }

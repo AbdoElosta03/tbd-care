@@ -46,10 +46,33 @@ const dictionary: Dictionary = {
   hero: {
     title: "TBD Care",
     description:
-      "رعاية صحية متكاملة لموظفيك وعائلاتهم، بشبكة طبية واسعة وتجربة رقمية بسيطة من أول زيارة حتى آخر مطالبة",
+      "رعاية صحية أقرب إليك في مختلف المدن الليبية، بشبكة طبية واسعة وتجربة رقمية بسيطة من أول زيارة حتى آخر مطالبة",
     primaryAction: "تعرف على خدماتنا",
     secondaryAction: "الشبكة الطبية",
     visualAlt: "طبيب من TBD Care في عيادة حديثة، مع حساب TBDCare ورقم 0800 150 150",
+  },
+  about: {
+    eyebrow: "من نحن",
+    title: "رعاية صحية أكثر قربًا ووضوحًا",
+    description:
+      "TBD Care شبكة رعاية صحية ليبية تجمع بين مزودي الخدمات الطبية والتقنيات الرقمية لتسهيل وصول الأفراد وموظفي الشركات إلى الرعاية المناسبة بثقة وسرعة.",
+    points: [
+      { id: "connected", title: "رعاية مترابطة", description: "شبكة واحدة تربط المستفيد بمزود الخدمة المناسب." },
+      { id: "local", title: "خبرة محلية", description: "حلول مصممة لتناسب احتياجات السوق الليبي." },
+      { id: "digital", title: "تجربة رقمية", description: "إجراءات أبسط ومتابعة أوضح في كل خطوة." },
+    ],
+  },
+  partners: {
+    eyebrow: "شركاؤنا",
+    title: "ثقة تجمعنا مع مؤسسات رائدة",
+    description: "نفخر بالعمل مع جهات ليبية تشاركنا الاهتمام بصحة موظفيها وجودة تجربتهم.",
+    items: [
+      { id: "nooran-bank", name: "مصرف النوران", monogram: "ن" },
+      { id: "noc", name: "المؤسسة الوطنية للنفط", monogram: "NOC" },
+      { id: "altafani", name: "شركة التفاني", monogram: "ت" },
+      { id: "qetaf", name: "قطاف", monogram: "ق" },
+      { id: "connectHub", name: "Connect Hub", monogram: "CH" },
+    ],
   },
   whyUs: {
     title: "لماذا تختلف TBD",
@@ -206,7 +229,7 @@ const dictionary: Dictionary = {
     previewAction: "عرض الشبكة",
     directoryTitle: "الشبكة الطبية TBD",
     directoryDescription:
-      "اختر مستشفيات أو عيادات أو صيدليات، ثم ابحث وصفِّ حسب المدينة. الأسماء أدناه هيكل تجريبي وليست دليل المزودين الحي.",
+      "اكتشف مزودي الرعاية ضمن شبكة TBD Care، واختر التصنيف المناسب ثم ابحث بالاسم أو المدينة.",
     searchLabel: "بحث",
     searchPlaceholder: "ابحث بالاسم أو العنوان",
     cityLabel: "المدينة",

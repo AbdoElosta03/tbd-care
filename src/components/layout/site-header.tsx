@@ -38,6 +38,7 @@ export function SiteHeader({
   const [scrolled, setScrolled] = useState(false);
   const [overHero, setOverHero] = useState(pathname === "/");
   const open = openPath === pathname;
+  const networkOverlay = pathname === paths.providers;
 
   useEffect(() => {
     if (!open) {
@@ -82,6 +83,7 @@ export function SiteHeader({
         overHero && "is-over-hero",
         scrolled && "is-scrolled",
         open && "is-open",
+        networkOverlay && "is-network-overlay",
       )}
     >
       <div className="site-header-bar">

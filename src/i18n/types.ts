@@ -42,6 +42,18 @@ export type Dictionary = {
     secondaryAction: string;
     visualAlt: string;
   };
+  about: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    points: Array<{ id: string; title: string; description: string }>;
+  };
+  partners: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    items: Array<{ id: string; name: string; monogram: string }>;
+  };
   whyUs: {
     title: string;
     description: string;

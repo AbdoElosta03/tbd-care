@@ -37,6 +37,7 @@ export function initFeatureShowcase(
 
   const scrub = options.scrub ?? 0.42;
   const dir = document.documentElement.dir === "rtl" ? -1 : 1;
+  const isSingleColumn = window.matchMedia("(max-width: 899px)").matches;
 
   const run = () => {
     rows.forEach((row, index) => {
@@ -50,7 +51,7 @@ export function initFeatureShowcase(
       );
 
       const fromSide = index % 2 === 0;
-      const fromX = dir * (fromSide ? -72 : 72);
+      const fromX = isSingleColumn ? 0 : dir * (fromSide ? -72 : 72);
 
       if (visual) {
         const photo = visual.querySelector<HTMLElement>(".feature-showcase__photo");
